@@ -1,8 +1,5 @@
 #!/bin/sh
 
-set -e
-set -x
-
 if [ -z "$UPSTREAM" ] ; then
   echo "UPSTREAM not set."
   exit 1
@@ -15,6 +12,11 @@ fi
 
 if [ -z "$RESOLVER" ] ; then
   echo "RESOLVER not set."
+  exit 1
+fi
+
+if [ -z "$AWS_REGION" ] ; then
+  echo "AWS_REGION not set."
   exit 1
 fi
 
@@ -54,7 +56,7 @@ sed -i -e s!PORT!"$PORT"!g /health-check.sh
 
 # add the auth token in default.conf
 AUTH=$(grep  X-Forwarded-User $CONFIG | awk '{print $4}'| uniq|tr -d "\n\r")
-TOKEN=$(aws ecr get-login-password | awk '{print $6}')
+TOKEN=$(aws ecr get-login-password)
 AUTH_N=$(echo AWS:${TOKEN}  | base64 |tr -d "[:space:]")
 sed -i "s|${AUTH%??}|${AUTH_N}|g" $CONFIG
 
