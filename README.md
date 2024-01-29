@@ -1,9 +1,6 @@
 <p align="left">
-    <a href="https://hub.docker.com/r/esailors/aws-ecr-http-proxy" alt="Pulls">
-        <img src="https://img.shields.io/docker/pulls/esailors/aws-ecr-http-proxy" /></a>
-    <a href="https://www.esailors.de" alt="Maintained">
-        <img src="https://img.shields.io/maintenance/yes/2022.svg" /></a>
-
+    <a href="https://hub.docker.com/r/yershalom/aws-ecr-proxy" alt="Pulls">
+        <img src="https://img.shields.io/docker/pulls/yershalom/aws-ecr-proxy" /></a>
 </p>
 
 # aws-ecr-http-proxy
@@ -16,9 +13,6 @@ The proxy is packaged in a docker container and can be configured with following
 | Environment Variable                | Description                                    | Status                            | Default    |
 | :---------------------------------: | :--------------------------------------------: | :-------------------------------: | :--------: |
 | `AWS_REGION`                        | AWS Region for AWS ECR                         | Required                          |            |
-| `AWS_ACCESS_KEY_ID`                 | AWS Account Access Key ID                      | Optional                          |            |
-| `AWS_SECRET_ACCESS_KEY`             | AWS Account Secret Access Key                  | Optional                          |            |
-| `AWS_USE_EC2_ROLE_FOR_AUTH`                  | Set this to true if we do want to use aws roles for authentication instead of providing the secret and access keys explicitly | Optional                          |            |
 | `UPSTREAM`                          | URL for AWS ECR                                | Required                          |            |
 | `RESOLVER`                          | DNS server to be used by proxy                 | Required                          |            |
 | `PORT`                              | Port on which proxy listens                    | Required                          |            |
@@ -32,43 +26,21 @@ The proxy is packaged in a docker container and can be configured with following
 
 ```sh
 docker run -d --name docker-registry-proxy --net=host \
-  -v /registry/local-storage/cache:/cache \
-  -v /registry/certificate.pem:/opt/ssl/certificate.pem \
-  -v /registry/key.pem:/opt/ssl/key.pem \
+  -v $(pwd)/cache:/cache \
+  -v $(pwd)/roles/docker-registry-proxy/files/certificate.pem:/opt/ssl/certificate.pem \
+  -v $(pwd)/roles/docker-registry-proxy/files/key.pem:/opt/ssl/key.pem \
   -e PORT=5000 \
   -e RESOLVER=8.8.8.8 \
   -e UPSTREAM=https://XXXXXXXXXX.dkr.ecr.eu-central-1.amazonaws.com \
-  -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-  -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
   -e AWS_REGION=${AWS_DEFAULT_REGION} \
   -e CACHE_MAX_SIZE=100g \
   -e ENABLE_SSL=true \
   -e REGISTRY_HTTP_TLS_KEY=/opt/ssl/key.pem \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/opt/ssl/certificate.pem \
-  esailors/aws-ecr-http-proxy:latest
+  yershalom/aws-ecr-proxy:latest
 ```
 
 If you ran this command on "registry-proxy.example.com" you can now get your images using `docker pull registry-proxy.example.com:5000/repo/image`.
-
-### Deploying the proxy
-
-#### Deploying with ansible
-
-Modify the ansible role [variables](https://github.com/eSailors/aws-ecr-http-proxy/tree/master/roles/docker-registry-proxy/defaults) according to your need and run the playbook as follow:
-```sh
-ansible-playbook -i hosts playbook-docker-registry-proxy.yaml
-```
-In case you want to enable SSL/TLS please replace the SSL certificates with the valid ones in [roles/docker-registry-proxy/files/*.pem](https://github.com/eSailors/aws-ecr-http-proxy/tree/master/roles/docker-registry-proxy/files)
-
-#### Deploying on Kubernetes with Helm
-You can install on Kubernetes using the [community-maintained chart](https://github.com/evryfs/helm-charts/tree/master/charts/ecr-proxy) like this:
-
-```shell
-helm repo add evryfs-oss https://evryfs.github.io/helm-charts/
-helm install evryfs-oss/ecr-proxy --name ecr-proxy --namespace ecr-proxy
-```
-
-See the [values-file](https://github.com/evryfs/helm-charts/blob/master/charts/ecr-proxy/values.yaml) for configuration parameters.
 
 
 ### Note on SSL/TLS

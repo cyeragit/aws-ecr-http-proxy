@@ -1,12 +1,11 @@
-FROM openresty/openresty:1.19.9.1-12-alpine
+FROM --platform=linux/amd64 openresty/openresty:1.25.3.1-0-alpine
 
 USER root
 
-RUN apk add -v --no-cache bind-tools python3 py-pip py3-urllib3 py3-colorama supervisor \
+RUN apk add -v --no-cache bind-tools python3 py-pip py3-urllib3 py3-colorama supervisor aws-cli \
  && mkdir /cache \
  && addgroup -g 110 nginx \
  && adduser -u 110  -D -S -h /cache -s /sbin/nologin -G nginx nginx \
- && pip install --upgrade pip awscli==1.11.183 \
  && apk -v --purge del py-pip
 
 COPY files/startup.sh files/renew_token.sh files/health-check.sh  /
